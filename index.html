@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Гинекологи Ярославля — Найди врача рядом</title>
+  <meta name="description" content="Найдите гинекологическую клинику в Ярославле. Отзывы, цены, запись онлайн.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --primary: #2e7d32;
+      --primary-light: #4caf50;
+      --dark: #1b5e20;
+      --light: #e8f5e9;
+      --gray: #666;
+      --border: #c8e6c9;
+      --shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #fafafa;
+      color: #333;
+      line-height: 1.7;
+    }
+    h1, h2, h3 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Навигация */
+    nav {
+      background: white;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 1.4rem;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex;
+      gap: 25px;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--dark);
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    header {
+      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+      padding: 70px 0 50px;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 2.8rem;
+      color: var(--dark);
+      margin-bottom: 15px;
+    }
+    header p {
+      font-size: 1.2rem;
+      color: #555;
+      max-width: 700px;
+      margin: 0 auto 30px;
+    }
+
+    .search-box {
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 1rem;
+    }
+    .search-box button {
+      padding: 0 25px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .search-box button:hover {
+      background: var(--dark);
+    }
+
+    section {
+      padding: 70px 0;
+    }
+    .section-title {
+      text-align: center;
+      font-size: 2rem;
+      color: var(--primary);
+      margin-bottom: 30px;
+    }
+
+    /* Фильтры услуг */
+    .services-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin: 20px 0 40px;
+    }
+    .service-btn {
+      padding: 12px 24px;
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 30px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .service-btn:hover, .service-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Клиники */
+    .clinics {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+    .clinic-card {
+      background: white;
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+    .clinic-card h3 {
+      font-size: 1.6rem;
+      color: var(--dark);
+      margin-bottom: 12px;
+    }
+    .rating {
+      color: #ff6f00;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .services-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 15px 0;
+    }
+    .services-tags span {
+      background: var(--light);
+      color: var(--primary);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    .clinic-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin: 15px 0;
+      font-size: 0.95rem;
+      color: var(--gray);
+    }
+    .clinic-info i {
+      color: var(--primary);
+      width: 20px;
+    }
+    .review {
+      font-style: italic;
+      color: #555;
+      margin: 15px 0;
+      padding: 15px;
+      background: var(--light);
+      border-radius: 10px;
+    }
+    .btn-contact {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      padding: 12px 25px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    .btn-contact:hover {
+      background: var(--dark);
+    }
+
+    /* Аккордеон услуг */
+    .accordion {
+      background: white;
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: var(--shadow);
+      margin: 30px 0;
+    }
+    .accordion-item {
+      border-bottom: 1px solid var(--border);
+      padding: 15px 0;
+    }
+    .accordion-item:last-child {
+      border-bottom: none;
+    }
+    .accordion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--dark);
+    }
+    .accordion-content {
+      margin-top: 15px;
+      display: none;
+    }
+    .accordion-header.active + .accordion-content {
+      display: block;
+    }
+
+    /* Карта */
+    #map {
+      width: 100%;
+      height: 450px;
+      border-radius: 16px;
+      margin: 30px 0;
+      box-shadow: var(--shadow);
+    }
+
+    footer {
+      text-align: center;
+      padding: 50px 0 30px;
+      background: var(--primary);
+      color: white;
+    }
+    footer p {
+      margin: 10px 0;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 2.2rem;
+      }
+      .search-box {
+        flex-direction: column;
+      }
+      .nav-links {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Навигация -->
+  <nav>
+    <div class="container nav-container">
+      <a href="#" class="logo">Гинекологи Ярославля</a>
+      <div class="nav-links">
+        <a href="#home">Главная</a>
+        <a href="#clinics">Клиники</a>
+        <a href="#services">Услуги</a>
+        <a href="#map-section">Карта</a>
+        <a href="#footer">Контакты</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Шапка -->
+  <header id="home">
+    <div class="container">
+      <h1>Найдите гинеколога в Ярославле</h1>
+      <p>Проверенные клиники рядом с домом. Отзывы, цены, запись онлайн.</p>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Введите район, улицу или метро">
+        <button onclick="searchClinics()"><i class="fas fa-search"></i> Найти</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Клиники -->
+  <section id="clinics">
+    <div class="container">
+      <h2 class="section-title">Клиники в Ярославле</h2>
+      
+      <!-- Фильтры услуг -->
+      <div class="services-filter">
+        <div class="service-btn active" onclick="filterByService('все')">Все</div>
+        <div class="service-btn" onclick="filterByService('УЗИ')">УЗИ</div>
+        <div class="service-btn" onclick="filterByService('беременность')">Беременность</div>
+        <div class="service-btn" onclick="filterByService('ОМС')">По ОМС</div>
+        <div class="service-btn" onclick="filterByService('онлайн')">Онлайн</div>
+        <div class="service-btn" onclick="filterByService('гормоны')">Гормоны</div>
+      </div>
+
+      <div class="clinics" id="clinicsList">
+
+        <div class="clinic-card" data-area="Ленинский" data-services="УЗИ, беременность">
+          <h3>Женская консультация №1</h3>
+          <div class="rating">★★★★★ (4.8)</div>
+          <div class="services-tags">
+            <span>УЗИ</span>
+            <span>Беременность</span>
+            <span>Планирование</span>
+          </div>
+          <div class="clinic-info">
+            <div><i class="fas fa-map-marker-alt"></i> ул. Республиканская, 15</div>
+            <div><i class="fas fa-phone"></i> +7 (4852) 12-34-56</div>
+            <div><i class="fas fa-clock"></i> Пн-Пт: 8:00–17:00</div>
+          </div>
+          <div class="review">
+            «Очень хорошие врачи, всё спокойно и понятно.» — Анна, 29 лет
+          </div>
+          <a href="https://wa.me/74852123456" class="btn-contact" target="_blank"><i class="fab fa-whatsapp"></i> Записаться</a>
+        </div>
+
+        <div class="clinic-card" data-area="Фрунзенский" data-services="УЗИ, ОМС">
+          <h3>Клиника "Здоровье"</h3>
+          <div class="rating">★★★★☆ (4.6)</div>
+          <div class="services-tags">
+            <span>УЗИ</span>
+            <span>ОМС</span>
+            <span>Контрацепция</span>
+          </div>
+          <div class="clinic-info">
+            <div><i class="fas fa-map-marker-alt"></i> ул. Ленинградская, 45</div>
+            <div><i class="fas fa-phone"></i> +7 (4852) 23-45-67</div>
+            <div><i class="fas fa-clock"></i> Ежедневно: 9:00–20:00</div>
+          </div>
+          <div class="review">
+            «Удобное расположение, запись без очередей.» — Екатерина, 32 года
+          </div>
+          <a href="https://wa.me/74852234567" class="btn-contact" target="_blank"><i class="fab fa-whatsapp"></i> Записаться</a>
+        </div>
+
+        <div class="clinic-card" data-area="Заволжский" data-services="беременность, УЗИ">
+          <h3>Медицинский центр "Авангард"</h3>
+          <div class="rating">★★★★★ (4.9)</div>
+          <div class="services-tags">
+            <span>Беременность</span>
+            <span>УЗИ 3D</span>
+            <span>Подготовка к родам</span>
+          </div>
+          <div class="clinic-info">
+            <div><i class="fas fa-map-marker-alt"></i> пр. Октября, 78</div>
+            <div><i class="fas fa-phone"></i> +7 (4852) 34-56-78</div>
+            <div><i class="fas fa-clock"></i> Пн-Сб: 8:00–19:00</div>
+          </div>
+          <div class="review">
+            «Отличная клиника для будущих мам. Всё на высшем уровне.» — Мария, 27 лет
+          </div>
+          <a href="https://wa.me/74852345678" class="btn-contact" target="_blank"><i class="fab fa-whatsapp"></i> Записаться</a>
+        </div>
+
+        <div class="clinic-card" data-area="Кировский" data-services="ОМС, УЗИ">
+          <h3>Поликлиника №3</h3>
+          <div class="rating">★★★★☆ (4.5)</div>
+          <div class="services-tags">
+            <span>ОМС</span>
+            <span>УЗИ</span>
+            <span>Анализы</span>
+          </div>
+          <div class="clinic-info">
+            <div><i class="fas fa-map-marker-alt"></i> ул. Кирова, 23</div>
+            <div><i class="fas fa-phone"></i> +7 (4852) 45-67-89</div>
+            <div><i class="fas fa-clock"></i> Пн-Пт: 7:30–16:00</div>
+          </div>
+          <div class="review">
+            «Хорошее место для тех, у кого полис ОМС.» — Ольга, 35 лет
+          </div>
+          <a href="https://wa.me/74852456789" class="btn-contact" target="_blank"><i class="fab fa-whatsapp"></i> Записаться</a>
+        </div>
+
+        <div class="clinic-card" data-area="Дзержинский" data-services="гормоны, УЗИ">
+          <h3>Клиника "Лотос"</h3>
+          <div class="rating">★★★★★ (4.7)</div>
+          <div class="services-tags">
+            <span>Гормоны</span>
+            <span>УЗИ</span>
+            <span>Онкология</span>
+          </div>
+          <div class="clinic-info">
+            <div><i class="fas fa-map-marker-alt"></i> ул. Победы, 56</div>
+            <div><i class="fas fa-phone"></i> +7 (4852) 56-78-90</div>
+            <div><i class="fas fa-clock"></i> Пн-Вс: 9:00–18:00</div>
+          </div>
+          <div class="review">
+            «Профессиональный подход, всё объясняют.» — Татьяна, 40 лет
+          </div>
+          <a href="https://wa.me/74852567890" class="btn-contact" target="_blank"><i class="fab fa-whatsapp"></i> Записаться</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Услуги -->
+  <section id="services">
+    <div class="container">
+      <h2 class="section-title">Популярные услуги</h2>
+      <div class="accordion">
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>УЗИ органов малого таза</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="accordion-content">
+            <p>Ультразвуковое исследование для диагностики состояния матки, яичников, мочевого пузыря. Безопасно, безболезненно, информативно.</p>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>Ведение беременности</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="accordion-content">
+            <p>Комплексное наблюдение за беременностью: осмотры, анализы, УЗИ, подготовка к родам. Подходит для всех триместров.</p>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>Приём по ОМС</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="accordion-content">
+            <p>Бесплатный приём для женщин с полисом ОМС. Включает осмотр, консультацию, назначение анализов.</p>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>Гормональный профиль</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="accordion-content">
+            <p>Комплексный анализ гормонов для диагностики нарушений менструального цикла, бесплодия, климакса.</p>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <div class="accordion-header" onclick="toggleAccordion(this)">
+            <span>Контрацепция</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="accordion-content">
+            <p>Подбор метода контрацепции, консультация по гормональным препаратам, установка ВМС.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Карта -->
+  <section id="map-section">
+    <div class="container">
+      <h2 class="section-title">Клиники на карте</h2>
+      <div id="map"></div>
+    </div>
+  </section>
+
+  <!-- Футер -->
+  <footer id="footer">
+    <div class="container">
+      <h3>Гинекологи Ярославля</h3>
+      <p>Информационный ресурс. Не является медицинским советом.</p>
+      <p>&copy; 2025 Все права защищены</p>
+    </div>
+  </footer>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Карта Ярославля
+    const map = L.map('map').setView([57.6261, 39.8845], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    // Метки клиник
+    const clinics = [
+      { coords: [57.6261, 39.8845], name: "Женская консультация №1", address: "ул. Республиканская, 15" },
+      { coords: [57.6123, 39.8712], name: "Клиника 'Здоровье'", address: "ул. Ленинградская, 45" },
+      { coords: [57.6345, 39.8987], name: "Медицинский центр 'Авангард'", address: "пр. Октября, 78" },
+      { coords: [57.6012, 39.8654], name: "Поликлиника №3", address: "ул. Кирова, 23" },
+      { coords: [57.6456, 39.9123], name: "Клиника 'Лотос'", address: "ул. Победы, 56" }
+    ];
+
+    clinics.forEach(clinic => {
+      L.marker(clinic.coords).addTo(map)
+        .bindPopup(`<b>${clinic.name}</b><br>${clinic.address}`);
+    });
+
+    // Поиск по адресу
+    function searchClinics() {
+      const input = document.getElementById('searchInput').value.toLowerCase();
+      const cards = document.querySelectorAll('.clinic-card');
+      cards.forEach(card => {
+        const area = card.getAttribute('data-area').toLowerCase();
+        const address = card.querySelector('.fa-map-marker-alt').nextSibling.textContent.toLowerCase();
+        if (area.includes(input) || address.includes(input) || input === '') {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Фильтры по услугам
+    function filterByService(service) {
+      const cards = document.querySelectorAll('.clinic-card');
+      cards.forEach(card => {
+        const services = card.getAttribute('data-services').toLowerCase();
+        if (service === 'все' || services.includes(service)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    // Аккордеон
+    function toggleAccordion(header) {
+      const isActive = header.classList.contains('active');
+      document.querySelectorAll('.accordion-header').forEach(h => h.classList.remove('active'));
+      if (!isActive) {
+        header.classList.add('active');
+      }
+    }
+  </script>
+
+</body>
+</html>
